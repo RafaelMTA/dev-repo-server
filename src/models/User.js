@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import hashService from '../services/Hash.js';
+import jwtToken from '../services/JWTToken.js';
 
 const UserSchema = mongoose.Schema({
     email:{
@@ -23,27 +24,19 @@ UserSchema.pre('save', async function(next){
     next();
 });
 
-UserSchema.pre('findOneAndUpdate', async function(next){
-    if(!this.isModified('password')) return next();
-    this.password = await hashService.hashPassword(this.password);
-    next();
-})
-
-UserSchema.methods.comparePassword = async function(password, callback) {
+UserSchema.methods.validatePassword = async function(password) {
     try{
-        await bcrypt.compare(password, this.password, (err, isMatch) => {
-            if(err) return callback(err);
-            callback(null, isMatch);
-        });
+        return await bcrypt.compare(password, this.password);
     }catch(error){
         console.log(error);
         return {error: 'Error on password validation'};
     } 
 }
 
-UserSchema.methods.generateToken = function(){
+UserSchema.methods.generateToken = async function(){
     try{
-        
+        const id = this._id;
+        return await jwtToken.generateToken({id});
     }catch(error){
         console.log(error);
         return {error: 'Error on generating token'};

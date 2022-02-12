@@ -1,19 +1,26 @@
 import {Router} from 'express';
 import userController from '../controllers/UserController.js';
+import repositoryController from '../controllers/RepositoryController.js';
+import authController from  '../controllers/AuthController.js';
+
+import auth from '../middlewares/auth.js';
 
 const routes = new Router();
 
+routes.post('/api/signin', authController.signIn);
+
+routes.use(auth);
+
 routes.get('/api/users', userController.readAll);
 routes.post('/api/users', userController.create);
-routes.get('/api/users/:userId', userController.read);
-routes.put('/api/users/:userId', userController.update);
-routes.delete('/api/users/:userId', userController.delete);
-routes.post('/api/users/login', userController.checkPassword);
+routes.get('/api/users/:id', userController.read);
+routes.put('/api/users/:id', userController.update);
+routes.delete('/api/users/:id', userController.delete);
 
-// routes.get('/repositories', userController.readAll());
-// routes.post('/repositories', userController.create());
-// routes.get('/repositories/:repositoryId', userController.read());
-// routes.put('/repositories/:repositoryId', userController.update());
-// routes.delete('/repositories/:repositoryId', userController.delete());
+routes.get('/api/:user_id/repositories', repositoryController.readAll);
+routes.post('/api/:user_id/repositories', repositoryController.create);
+routes.get('/api/:user_id/repositories/:repository_id', repositoryController.read);
+routes.put('/api/:user_id/repositories/:repository_id', repositoryController.update);
+routes.delete('/api/:user_id/repositories/:repository_id', repositoryController.delete);
 
 export default routes;

@@ -1,9 +1,10 @@
-import model from '../models/User.js';
+import User from '../models/User.js';
+import hashService from '../services/Hash.js';
 
 class UserController{
     readAll = async(req, res, next) => {
         try{
-            const users = await model.find();
+            const users = await User.find();
             if(!users) res.status(422).json({
                 message: 'No user found'
             });
@@ -19,12 +20,12 @@ class UserController{
     create = async(req, res, next) => {
         try{
             const {email, password} = req.body;
-            const exists = await model.findOne({email});
+            const exists = await User.findOne({email});
             if(exists) return res.status(422).json({
                 message: `${email} already exists`
             });
             
-            const newUser = await model.create({email, password});
+            const newUser = await User.create({email, password});
             return res.status(201).json({message: 'Success', data: newUser});
         }catch(error){
             console.log(error);
@@ -34,7 +35,7 @@ class UserController{
 
     read = async(req, res, next) => {
         try{
-            const user = await model.findById(req.params.userId);
+            const user = await User.findById(req.params.userId);
             if(!user) return res.status(404).json("No user Found");
             return res.status(200).json({message: 'Success', data: user});
         }catch(error){
@@ -46,8 +47,14 @@ class UserController{
     update = async(req, res, next) => {
         try{
             const{email, password} = req.body;
-            const user = await model.findOne({_id: req.params.id});
+            const user = await User.findById(req.params.id);
+
             if(!user) return res.status(404).json("No user Found");
+
+            const hashPassword = await hashService.hashPassword(password);
+
+            await user.updateOne({email, password: hashPassword});
+
             return res.status(200).json({message: 'Updated', data: user});
         }catch(error){
             console.log(error);
@@ -57,29 +64,11 @@ class UserController{
 
     delete = async(req, res, next) => {
         try{
-            const user = await model.findByIdAndDelete(req.params.userId);
+            await User.findByIdAndDelete(req.params.id);
+            return res.status(200).json({message: 'User Deleted'});
         }catch(error){
             console.log(error);
             return res.status(500).json({ error: 'Internal Server Error' });
-        }
-    }
-
-    checkPassword = async(req, res, next) => {
-        try{
-            const {email, password} = req.body;
-            const user = await model.findOne({email});
-            if(!user) return res.status(404).json({message: 'No user found'});
-            user.comparePassword(password, (err, isMatch) => {
-                if(err) {
-                    console.log(err);
-                    return res.status(500).json({error: 'Error on user authentication'});
-                }
-                if(!isMatch) return res.status(405).json({message: 'Invalid Password'});
-                return res.status(200).json({message: 'Authenticated', matched: isMatch});
-            });                
-        }catch(error){
-            console.log(error);
-            return res.status(500).json({message: 'Internal server error'});
         }
     }
 }
