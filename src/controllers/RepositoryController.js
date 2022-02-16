@@ -40,7 +40,7 @@ class RepositoryController{
 
             if(!userHelper.exists(user_id)) return res.status(404).json('No user found');
             
-            const repository = await Repository.findOne({userId: user_id, _id: repository_id});
+            const repository = await Repository.findOne({userId: user_id, url});
             if(!repository) return res.status(404).json('No repository found');
             return res.status(200).json({message: 'success', data: repository});
         }catch(error){
