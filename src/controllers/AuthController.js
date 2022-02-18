@@ -8,9 +8,13 @@ class AuthController{
             const user = await User.findOne({email});
             if(!user) return res.status(401).json({error: 'Invalid User'});
 
-            if(!user.validatePassword(password)) return res.status(401).json({error: 'Invalid Password'});
-            const token = await user.generateToken();
-            return res.status(200).json(token);               
+            const validate = await user.validatePassword(password);
+            if(!validate) return res.status(401).json({error: 'Invalid Password'});
+
+            const generatedToken = await user.generateToken();
+            const {id} = user;
+
+            return res.json({user: {id, email}, token: generatedToken});               
         }catch(error){
             console.log(error);
             return res.status(500).json({error: 'Internal server error'});
